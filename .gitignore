@@ -1,0 +1,16 @@
+# Ignore folders
+*.pyc
+unet_model_weights/*
+segmentation_model_weights/*
+unet_results/*
+segmentation_results/*
+unified_dataset/*
+__pycache__/*
+*.pyc
+*.npy
+*.png
+*.jpg
+*.jpeg
+*.pt
+*.pth
+wandb/*

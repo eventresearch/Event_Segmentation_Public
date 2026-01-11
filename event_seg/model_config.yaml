@@ -1,0 +1,500 @@
+general:
+  # device: "cuda"
+  seed: 42
+  num_workers: 4
+  num_of_out_classes: 11 
+  num_of_in_channels: 3
+  time_steps: 1
+  event_channels: 1
+  bilinear: false
+  num_of_mask_classes: 11
+  is_event_scapes: false
+  dropout_rate: 0.2
+
+training: 
+  model: smp_event_generic # Use 'smp_unet' to select SMP UNet model
+  event_ms: 50
+  use_custom_time_surface: true  # If true, uses custom time surface generation for event data
+  high_to_low_ratio: 10.0  # High-to-low ratio for custom time surface
+  gamma: 2.5  # Gamma correction for custom time surface
+  r0: 0.3    # r0 value for calculate_pixel_lengths_rational function, if none it is not used and former power function will be used
+  enable_inference_during_training: true
+  tensorboard_save_log: true
+  wandb_save_log: true  # Enable Weights & Biases logging
+  wandb_entity: event-research  # W&B team/entity name (use your username or team name)
+  wandb_project: "event_segmentation"  # W&B project name
+  wandb_run_name: null  # W&B run name (auto-generated if null)
+  inference_interval: 1
+  dont_use_validation: false
+  result_dir: "segmentation_results/runs/training"
+  epochs: 40
+  batch_size: 2
+  learning_rate: 0.0001
+  loss: "FocalDice"
+  use_consecutive_loss: false
+  save_checkpoint_with_mean_iou: true  # save the model with the highest mean iou for epochs that mean iou is measured and improved, it is default false when the model is autoencoder 
+  save_interim_checkpoints: true
+  save_interim_checkpoint_interval: 1 # if save_interim_checkpoints is false, this parameter is ignored
+
+inference:
+  model: "smp_unet"
+  metric_path: "segmentation_results/iou_metrics.json"
+  use_gt_masks: true 
+  event_ms: 10
+  batch_size: 1
+  output_folder: "segmentation_results/smp_unet/output_DSEC/images"
+  result_dir: "segmentation_results/runs/inference"
+  save_masks: true
+  tensorboard_save_activations: false
+  tensorboard_save_log: false 
+  wandb_save_log: true
+  torch_summary: false
+
+dataset:
+  input_folder: "unified_dataset/DSEC_dataset_split"  # "unified_dataset/event_scapes_random_split" 
+  rgb_folder: "images"
+  mask_folder: "masks" # sam
+  event_folder: "event_frames_{event_ms}ms"
+  autoencoder_folder: "autoencoder/3D_reduced_mask_top4"
+  train_folder_name: "train"
+  val_folder_name: "val"
+  test_folder_name: "test"
+  
+  apply_augmentation: true        # Flag to enable/disable augmentation
+  augmentation_probability: 1.0  # Probability to apply augmentation
+  aug_flip_prob: 0.5
+  aug_scale_limit: 0.1
+  aug_rotate_limit: 15
+  aug_shift_limit: 0.0625
+  aug_affine_prob: 0.4
+  aug_rgb_prob: 0.4
+paths:
+  save_dir: "segmentation_model_weights"
+  model_path: null
+  history_path: null
+
+model_specific_params:
+  smp_generic:
+    use_rgb: true
+    use_event: false
+    architecture: DeepLabV3
+    encoder_name: resnet50
+    encoder_weights: imagenet
+    # extra_params:
+      # encoder_depth: 5
+      # decoder_channels: [256, 128, 64, 32, 16] # Optional, using defaults
+      # decoder_use_batchnorm: true
+  smp_event_generic:
+    use_rgb: true
+    use_event: true
+    architecture: DeepLabV3
+    encoder_name: resnet50
+    encoder_weights: imagenet
+    event_channels: 1
+    # extra_params:
+      # encoder_depth: 5
+      # decoder_channels: [256, 128, 64, 32, 16] # Optional, using defaults
+      # decoder_use_batchnorm: true
+  smp_segformer:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: false
+    encoder_name: mit_b3
+    encoder_weights: imagenet
+  smp_unet:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: false
+    encoder_name: resnet34
+    encoder_weights: imagenet
+  custom_smp_unet:
+      use_rgb: true
+      use_event: false
+      use_autoencoder: false
+      encoder_name: resnet34
+      encoder_weights: imagenet
+  smp_dual_encoder_add:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    fusion_type: "add"
+    event_channels: 1
+    base_model: "smp_dual_encoder_unet"
+    encoder_name: resnet34
+    encoder_weights: imagenet
+  smp_dual_encoder_concat:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    fusion_type: "concat"
+    event_channels: 1
+    base_model: "smp_dual_encoder_unet"
+    encoder_name: resnet34
+    encoder_weights: imagenet
+  smp_dual_encoder_3_channel_add:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    fusion_type: "add"
+    event_channels: 3
+    base_model: "smp_dual_encoder_unet_3_channel"
+    encoder_name: resnet34
+    encoder_weights: imagenet
+  smp_dual_encoder_3_channel_concat:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    fusion_type: "concat"
+    event_channels: 3
+    base_model: "smp_dual_encoder_unet_3_channel"
+    encoder_name: resnet34
+    encoder_weights: imagenet
+  basic:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: false
+  deeplab:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: false
+  deeplab_event_3channel:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    event_channels: 3
+  deeplab_triple_input:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: true
+  swinformer:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: false
+  deeplab_autoencoder_seg:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+  deeplab_autoencoder_seg_v2:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+  deeplab_autoencoder_seg_threshold:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+    convert_to_binary: true
+    binary_threshold: 50
+    base_model: "deeplab_autoencoder_seg"
+  deeplab_autoencoder_seg_threshold:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+    convert_to_binary: true
+    binary_threshold: 50
+    base_model: "deeplab_autoencoder_seg"
+  deeplab_autoencoder_seg_morp:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+    morp_iterations: 1
+  deeplab_autoencoder_seg_morp_3:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+    morp_iterations: 3
+    base_model: "deeplab_autoencoder_seg_morp"
+  deeplab_autoencoder_seg_morp_2:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+    morp_iterations: 2
+    base_model: "deeplab_autoencoder_seg_morp"
+  deeplab_event:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+  deeplab_4_channel:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+  deeplab_mid_fusion_deep:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+  deeplab_mid_fusion_shallow:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+  deeplab_event_v2:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+  dual_deeplab:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+  dual_deeplab_3D:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    is_3D: true
+    event_channels: 1
+    time_steps: 5
+    event_ms: 10
+  deeplab_event_pretrained:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    pretrained: true
+    base_model: deeplab_event
+  deeplab_transformer_attention:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+  deeplab_autoencoder:
+    is_autoencoder: true
+    use_rgb: false
+    use_event: true
+    use_autoencoder: false
+    base_loss: "BCE"
+    num_of_out_classes: 1
+    num_of_in_channels: 1
+    edge_method: "canny" 
+  attentionv1:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+
+  attentionv2:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+
+  attentionv3:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+
+  attentionv4:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+
+  dual_encoder_add:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    fusion_type: "add"
+    base_model: "dual_encoder"
+
+  dual_encoder_concat:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    fusion_type: "concat"
+    base_model: "dual_encoder"
+
+  dual_encoder_attention_add:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    fusion_type: "add"
+    base_model: "dual_encoder_attention"
+
+  dual_encoder_attention_concat:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    fusion_type: "concat"
+    base_model: "dual_encoder_attention"
+
+  dual_encoder_3D_add:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    fusion_type: "add"
+    base_model: "dual_encoder_3D"
+    is_3D: true
+    event_channels: 1
+    time_steps: 5
+    event_ms: 10
+
+  dual_encoder_3D_concat:
+    use_rgb: true
+    use_event: true
+    use_autoencoder: false
+    fusion_type: "concat"
+    base_model: "dual_encoder_3D"
+    is_3D: true
+    time_steps: 5
+    event_channels: 1
+    event_ms: 10
+
+  attention_auto_encoder_v1:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+
+  attention_auto_encoder_v2:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+
+  attention_auto_encoder_v3:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+
+  attention_auto_encoder_v4:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+
+  auto_encoder_dual_encoder_add:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+    fusion_type: "add"
+    base_model: "auto_encoder_dual_encoder"
+
+  auto_encoder_dual_encoder_concat:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+    fusion_type: "concat"
+    base_model: "auto_encoder_dual_encoder"
+
+  auto_encoder_dual_encoder_add_threshold:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+    fusion_type: "add"
+    base_model: "auto_encoder_dual_encoder"
+    convert_to_binary: true
+    binary_threshold: 50
+ 
+  auto_encoder_dual_encoder_concat_threshold:
+    use_rgb: true
+    use_event: false
+    use_autoencoder: true
+    fusion_type: "concat"
+    base_model: "auto_encoder_dual_encoder"
+    convert_to_binary: true
+    binary_threshold: 50
+
+  denoise_autoencoder:
+    is_autoencoder: true
+    use_rgb: false
+    use_event: true
+    use_autoencoder: false
+    base_loss: "BCE"
+    num_of_out_classes: 1
+    num_of_in_channels: 1
+    edge_method: "canny"  
+
+  denoise_autoencoder_double_channel:
+    is_autoencoder: true
+    is_double_channel_autoencoder: true
+    use_rgb: false
+    use_event: true
+    use_autoencoder: false
+    base_loss: "CE"
+    num_of_out_classes: 2
+    num_of_in_channels: 1
+    edge_method: "canny"  
+  denoise_autoencoder_double_channel_morp:
+    is_autoencoder: true
+    is_double_channel_autoencoder: true
+    use_rgb: false
+    use_event: true
+    use_autoencoder: false
+    base_loss: "FocalDice"
+    weight_focal: 0.7
+    weight_dice: 0.3
+    num_of_out_classes: 2
+    num_of_in_channels: 1
+    edge_method: "canny"  
+    morp_iterations: 1
+    apply_morphology: true
+    base_model: "denoise_autoencoder_double_channel"
+
+  denoise_autoencoder_lpips_bce:
+    is_autoencoder: true
+    use_rgb: false
+    use_event: true
+    use_autoencoder: false
+    base_loss: "HybridLPIPS"
+    lpips_weight: 0.5
+    other_loss : "BCE"
+    other_loss_weight: 0.5
+    num_of_out_classes: 1
+    num_of_in_channels: 1
+    edge_method: "canny"  
+    base_model: "denoise_autoencoder"
+
+  denoise_autoencoder_lpips:
+    is_autoencoder: true
+    use_rgb: false
+    use_event: true
+    use_autoencoder: false
+    base_loss: "HybridLPIPS"
+    num_of_out_classes: 1
+    num_of_in_channels: 1
+    edge_method: "canny"  
+    base_model: "denoise_autoencoder"
+
+  concatenated_autoencoder:
+    is_autoencoder: true
+    use_rgb: false
+    use_event: true
+    use_autoencoder: false
+    base_loss: "BCE"
+    num_of_out_classes: 1
+    num_of_in_channels: 1
+    edge_method: "canny"  
+  
+  denoise_autoencoder_3D:
+    event_ms: 10
+    is_autoencoder: true
+    use_rgb: false
+    use_event: true
+    use_autoencoder: false
+    base_loss: "BCE"
+    num_of_out_classes: 1
+    num_of_in_channels: 1
+    time_steps: 5
+    is_3D: true
+    edge_method: "canny"
+
+
+  denoise_autoencoder_3D_double_channel:
+    time_steps: 5
+    is_3D: true
+    event_ms: 10
+    is_autoencoder: true
+    is_double_channel_autoencoder: true
+    use_rgb: false
+    use_event: true
+    use_autoencoder: false
+    base_loss: "CE"
+    num_of_out_classes: 2
+    num_of_in_channels: 1
+    edge_method: "canny"  
+  denoise_autoencoder_3D_double_channel_morp:
+    is_autoencoder: true
+    is_double_channel_autoencoder: true
+    use_rgb: false
+    use_event: true
+    use_autoencoder: false
+    base_loss: "FocalDice"
+    weight_focal: 0.7
+    weight_dice: 0.3
+    num_of_out_classes: 2
+    num_of_in_channels: 1
+    edge_method: "canny"  
+    morp_iterations: 1
+    apply_morphology: true
+    base_model: "denoise_autoencoder_3D_double_channel"
+    time_steps: 5
+    is_3D: true
+    event_ms: 10

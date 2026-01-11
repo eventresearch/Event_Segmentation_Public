@@ -1,0 +1,9 @@
+output_frames*/
+events.h5
+rgb_images
+*.mp4
+*.pyc
+__pycache__*/
+*.png
+*.h5
+*.yaml

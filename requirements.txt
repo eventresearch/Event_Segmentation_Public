@@ -1,0 +1,23 @@
+# conda create -n event_segmentation python==3.12
+# torch = 2.9.1 cuda 12.6  pip install torch torchvision --index-url https://download.pytorch.org/whl/cu126
+# python = 3.12
+# pip install -r requirements.txt
+
+opencv-python
+h5py
+hdf5plugin
+omegaconf
+scipy
+tqdm
+numba
+shutils
+tensorboard
+wandb
+moviepy
+matplotlib
+numpy
+torchsummary
+lpips
+timm
+segmentation-models-pytorch
+albumentations
